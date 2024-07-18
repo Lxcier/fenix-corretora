@@ -1,24 +1,23 @@
 import React from 'react'
 
 import Header from '../components/Header'
-import Hero from '../components/Hero'
-import SearchSection from '../components/SearchSection'
-import ServicesSectionFirst from '../components/ServicesSectionFirst'
-import AboutSection from '../components/AboutSection'
+import Hero from '../components/Home/Hero'
+import SearchSection from '../components/Home/SearchSection'
+import ServicesSectionFirst from '../components/Home/ServicesSectionFirst'
+import AboutSection from '../components/Home/AboutSection'
+import ContactForm from '../components/Home/ContactForm'
+import Footer from '../components/Footer'
 
 const Home: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-100">
-            <Header />
+            <Header isHomePage={true} />
             <Hero />
             <SearchSection />
             <ServicesSectionFirst />
             <AboutSection />
-            <footer className="bg-gray-200 mt-8 p-4 text-center">
-                <p>
-                    &copy; 2023 Corretora Fênix. Todos os direitos reservados.
-                </p>
-            </footer>
+            <ContactForm />
+            <Footer />
         </div>
     )
 }

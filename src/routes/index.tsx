@@ -6,6 +6,8 @@ import AtivoDetalhes from '../pages/AtivoDetalhes'
 import Financiamento from '../pages/Financiamento'
 import Negociacao from '../pages/Negociacao'
 import Encomendar from '../pages/Encomendar'
+import ConfirmarForm from '../pages/ConfirmationPage'
+import ListingPage from '../pages/ListingPage'
 
 const router = createBrowserRouter([
     {
@@ -13,11 +15,11 @@ const router = createBrowserRouter([
         element: <Home />,
     },
     {
-        path: '/imoveis',
+        path: '/listing/imoveis',
         element: <Imoveis />,
     },
     {
-        path: '/veiculos',
+        path: '/listing/veiculos',
         element: <Veiculos />,
     },
     {
@@ -35,6 +37,14 @@ const router = createBrowserRouter([
     {
         path: '/encomendar',
         element: <Encomendar />,
+    },
+    {
+        path: '/confirmation',
+        element: <ConfirmarForm />,
+    },
+    {
+        path: '/listing',
+        element: <ListingPage />,
     },
 ])
 

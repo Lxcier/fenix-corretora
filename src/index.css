@@ -5,3 +5,7 @@
 .root {
     @apply bg-white;
 }
+
+.swiper-pagination-bullet-active {
+    background-color: #fb923c !important;
+}

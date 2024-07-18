@@ -1,5 +1,7 @@
+import Footer from '../components/Footer'
+
 const Imoveis = () => {
-    return <div>Imoveis</div>
+    return <Footer />
 }
 
 export default Imoveis

@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react'
 import { FaWhatsapp } from 'react-icons/fa'
 
 // Importe suas imagens aqui
-import heroImage1 from '../assets/hero-images/hero-image-1.jpg'
-import heroImage2 from '../assets/hero-images/hero-image-2.jpg'
-import heroImage3 from '../assets/hero-images/hero-image-3.jpg'
-import heroImage4 from '../assets/hero-images/hero-image-4.jpg'
+import heroImage1 from '/src/assets/hero-images/hero-image-1.jpg'
+import heroImage2 from '/src/assets/hero-images/hero-image-2.jpg'
+import heroImage3 from '/src/assets/hero-images/hero-image-3.jpg'
+import heroImage4 from '/src/assets/hero-images/hero-image-4.jpg'
 
 const images = [heroImage1, heroImage2, heroImage3, heroImage4]
 

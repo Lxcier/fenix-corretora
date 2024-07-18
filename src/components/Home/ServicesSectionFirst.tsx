@@ -8,8 +8,8 @@ import Slider from 'react-slick'
 import 'slick-carousel/slick/slick.css'
 import 'slick-carousel/slick/slick-theme.css'
 
-import imgImoveis from '../assets/services-images/imoveis.jpg'
-import imgVeiculos from '../assets/services-images/veiculos.jpg'
+import imgImoveis from '/src/assets/services-images/imoveis.jpg'
+import imgVeiculos from '/src/assets/services-images/veiculos.jpg'
 
 const ServicesSectionFirst: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'imoveis' | 'veiculos'>(

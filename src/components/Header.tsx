@@ -1,25 +1,38 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 
-const Header: React.FC = () => {
+interface HeaderProps {
+    isHomePage: boolean
+}
+
+const Header: React.FC<HeaderProps> = ({ isHomePage }) => {
     const [isScrolled, setIsScrolled] = useState(false)
 
     useEffect(() => {
         const handleScroll = () => {
-            const heroHeight =
-                document.getElementById('hero')?.offsetHeight || 0
-            setIsScrolled(window.scrollY > heroHeight)
+            if (isHomePage) {
+                const heroHeight =
+                    document.getElementById('hero')?.offsetHeight || 0
+                setIsScrolled(window.scrollY > heroHeight)
+            } else {
+                setIsScrolled(true)
+            }
         }
 
         window.addEventListener('scroll', handleScroll)
+        handleScroll()
         return () => window.removeEventListener('scroll', handleScroll)
-    }, [])
+    }, [isHomePage])
+
+    const headerClass = isHomePage
+        ? isScrolled
+            ? 'bg-white text-gray-800 shadow'
+            : 'bg-transparent text-white'
+        : 'bg-white text-gray-800 shadow'
 
     return (
         <header
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-                isScrolled ? 'bg-white shadow-md' : 'bg-transparent'
-            }`}
+            className={`fixed w-full z-10 transition-all duration-300 ${headerClass}`}
         >
             <div className="container mx-auto px-4 py-4 flex justify-between items-center">
                 <Link to="/" className="text-2xl font-bold text-orange-500">
@@ -33,7 +46,7 @@ const Header: React.FC = () => {
                     <ul className="flex space-x-6">
                         <li>
                             <Link
-                                to="/imoveis"
+                                to="/listing/imoveis"
                                 className={`font-semibold hover:text-orange-500 hover:border-orange-500 border-b-[3px] border-transparent transition-colors duration-200 pb-1 ${
                                     isScrolled ? 'text-gray-800' : 'text-white'
                                 }`}
@@ -43,7 +56,7 @@ const Header: React.FC = () => {
                         </li>
                         <li>
                             <Link
-                                to="/veiculos"
+                                to="/listing/veiculos"
                                 className={`font-semibold hover:text-orange-500 hover:border-orange-500 border-b-[3px] border-transparent transition-colors duration-200 pb-1 ${
                                     isScrolled ? 'text-gray-800' : 'text-white'
                                 }`}
