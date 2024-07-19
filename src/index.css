@@ -9,3 +9,9 @@
 .swiper-pagination-bullet-active {
     background-color: #fb923c !important;
 }
+
+.swiper-button-next::after,
+.swiper-button-prev::after {
+    font-size: 16px;
+    font-weight: bold;
+}

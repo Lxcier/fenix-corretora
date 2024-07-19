@@ -8,6 +8,7 @@ import Negociacao from '../pages/Negociacao'
 import Encomendar from '../pages/Encomendar'
 import ConfirmarForm from '../pages/ConfirmationPage'
 import ListingPage from '../pages/ListingPage'
+import AssetPage from '../pages/AssetPage'
 
 const router = createBrowserRouter([
     {
@@ -45,6 +46,10 @@ const router = createBrowserRouter([
     {
         path: '/listing',
         element: <ListingPage />,
+    },
+    {
+        path: '/asset/:id',
+        element: <AssetPage />,
     },
 ])
 

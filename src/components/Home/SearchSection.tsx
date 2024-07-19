@@ -12,11 +12,11 @@ const SearchSection: React.FC = () => {
 
     const handleSearch = () => {
         const queryParams = new URLSearchParams({
-            types: selectedTypes.join(','),
+            type: selectedTypes.length > 0 ? selectedTypes[0] : 'all',
             intention: selectedIntention,
             term: searchTerm,
         })
-        navigate(`/search?${queryParams.toString()}`)
+        navigate(`/listing?${queryParams.toString()}`)
     }
 
     return (
