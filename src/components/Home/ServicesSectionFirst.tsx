@@ -10,11 +10,13 @@ import 'slick-carousel/slick/slick-theme.css'
 
 import imgImoveis from '/src/assets/services-images/imoveis.jpg'
 import imgVeiculos from '/src/assets/services-images/veiculos.jpg'
+import { useAssets } from '../../hooks/useAssets'
 
 const ServicesSectionFirst: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'imoveis' | 'veiculos'>(
         'imoveis'
     )
+    const { getAssetsByType, allAssets } = useAssets()
 
     const tabContent = {
         imoveis: {
@@ -23,8 +25,11 @@ const ServicesSectionFirst: React.FC = () => {
             description:
                 'Aqui você encontra o imóvel ideal para você, seja casa, apartamento, comércio, lote/terreno ou para investimento. Temos opções residenciais e comerciais para todos os gostos e orçamentos.',
             image: imgImoveis,
-            link: '/imoveis',
-            stats: { count: 1500, label: 'Imóveis disponíveis' },
+            link: '/listing?type=imoveis',
+            stats: {
+                count: getAssetsByType('imovel').length,
+                label: 'Imóveis disponíveis',
+            },
         },
         veiculos: {
             title: 'Veículos',
@@ -32,61 +37,17 @@ const ServicesSectionFirst: React.FC = () => {
             description:
                 'Descubra uma ampla gama de veículos que atendem a todas as suas necessidades. Desde carros compactos econômicos até SUVs luxuosos, temos opções para todos os estilos de vida e orçamentos.',
             image: imgVeiculos,
-            link: '/veiculos',
-            stats: { count: 800, label: 'Veículos disponíveis' },
+            link: '/listing?type=veiculos',
+            stats: {
+                count: getAssetsByType('veiculo').length,
+                label: 'Veículos disponíveis',
+            },
         },
     } as const
 
     const popularItems = {
-        imoveis: [
-            {
-                id: 1,
-                title: 'Casa Moderna',
-                price: 'R$ 500.000',
-                image: 'https://via.placeholder.com/1920x1080',
-            },
-            {
-                id: 2,
-                title: 'Apartamento Central',
-                price: 'R$ 300.000',
-                image: 'https://via.placeholder.com/1920x1080',
-            },
-            {
-                id: 3,
-                title: 'Terreno Amplo',
-                price: 'R$ 200.000',
-                image: 'https://via.placeholder.com/1920x1080',
-            },
-        ],
-        veiculos: [
-            {
-                id: 1,
-                title: 'SUV Esportivo',
-                price: 'R$ 120.000',
-                image: 'https://via.placeholder.com/1920x1080',
-            },
-            {
-                id: 2,
-                title: 'Sedan Luxuoso',
-                price: 'R$ 90.000',
-                image: 'https://via.placeholder.com/1920x1080',
-            },
-            {
-                id: 3,
-                title: 'Hatch Econômico',
-                price: 'R$ 60.000',
-                image: 'https://via.placeholder.com/1920x1080',
-            },
-        ],
-    }
-
-    const handleItemClick = (item: {
-        id?: number
-        title: string
-        price?: string
-        image?: string
-    }) => {
-        // Adicionar lógica extra se necessário.
+        imoveis: getAssetsByType('imovel').slice(0, 3),
+        veiculos: getAssetsByType('veiculo').slice(0, 3),
     }
 
     return (
@@ -199,23 +160,18 @@ const ServicesSectionFirst: React.FC = () => {
                                         className="px-2 py-5 overflow-hidden"
                                     >
                                         <Link
-                                            to={`/${activeTab}/${item.id}`}
+                                            to={`/asset/${item.id}`}
                                             className="block"
                                         >
-                                            <div
-                                                className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.01] cursor-pointer h-full flex flex-col"
-                                                onClick={() =>
-                                                    handleItemClick(item)
-                                                }
-                                            >
+                                            <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.01] cursor-pointer h-full flex flex-col">
                                                 <div className="relative">
                                                     <img
-                                                        src={item.image}
+                                                        src={item.images[0]}
                                                         alt={item.title}
                                                         className="w-full h-48 object-cover"
                                                     />
                                                     <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 text-sm font-bold rounded">
-                                                        {activeTab === 'imoveis'
+                                                        {item.isNew
                                                             ? 'Novo'
                                                             : 'Destaque'}
                                                     </div>
@@ -226,28 +182,26 @@ const ServicesSectionFirst: React.FC = () => {
                                                             {item.title}
                                                         </h4>
                                                         <p className="text-gray-600 text-sm mb-2">
-                                                            {activeTab ===
-                                                            'imoveis'
-                                                                ? 'Localização'
-                                                                : 'Ano/Modelo'}
+                                                            {item.location.city}
                                                         </p>
                                                     </div>
                                                     <div>
                                                         <p className="text-red-500 font-bold text-xl">
-                                                            {item.price}
+                                                            R${' '}
+                                                            {item.price.toLocaleString()}
                                                         </p>
                                                         <div className="flex justify-between text-sm text-gray-500 mt-2">
                                                             <span>
                                                                 {activeTab ===
                                                                 'imoveis'
-                                                                    ? '3 quartos'
-                                                                    : '1.6 Flex'}
+                                                                    ? `${item.features.bedrooms} quartos`
+                                                                    : `${item.features.year}`}
                                                             </span>
                                                             <span>
                                                                 {activeTab ===
                                                                 'imoveis'
-                                                                    ? '120 m²'
-                                                                    : '50.000 km'}
+                                                                    ? `${item.features.area} m²`
+                                                                    : `${item.features.mileage} km`}
                                                             </span>
                                                         </div>
                                                     </div>

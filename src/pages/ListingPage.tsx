@@ -18,67 +18,11 @@ import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { motion, AnimatePresence } from 'framer-motion'
 import InfiniteScroll from 'react-infinite-scroll-component'
+import { useAssets } from '../hooks/useAssets'
+import { Asset } from '../data/assets'
 
-// Interfaces
-interface ListingItem {
-    id: number
-    title: string
-    price: number
-    location: string
-    type: 'imovel' | 'veiculo'
-    image: string
-    details: {
-        bedrooms?: number
-        bathrooms?: number
-        area?: number
-        year?: number
-        mileage?: number
-    }
-}
-
-interface AdvancedFilters {
-    minPrice: number
-    maxPrice: number
-    bedrooms: number
-    bathrooms: number
-    minYear: number
-    maxMileage: number
-}
-
-// Mock Data
-const dummyListings: ListingItem[] = [
-    {
-        id: 1,
-        title: 'Casa Moderna',
-        price: 500000,
-        location: 'Centro, Atibaia',
-        type: 'imovel',
-        image: '/path-to-image1.jpg',
-        details: { bedrooms: 3, bathrooms: 2, area: 150 },
-    },
-    {
-        id: 2,
-        title: 'Apartamento Luxuoso',
-        price: 350000,
-        location: 'Jardim Paulista, Atibaia',
-        type: 'imovel',
-        image: '/path-to-image2.jpg',
-        details: { bedrooms: 2, bathrooms: 1, area: 80 },
-    },
-    {
-        id: 3,
-        title: 'SUV Esportivo',
-        price: 120000,
-        location: 'Atibaia',
-        type: 'veiculo',
-        image: '/path-to-image3.jpg',
-        details: { year: 2021, mileage: 30000 },
-    },
-]
-
-// Components
 const CustomSelect: React.FC<{
-    options: { value: string; label: string }[]
+    options: { value: string; label: string; icon: React.ReactNode }[]
     value: string
     onChange: (value: string) => void
 }> = ({ options, value, onChange }) => {
@@ -141,7 +85,7 @@ const CustomSelect: React.FC<{
     )
 }
 
-const ListingCard: React.FC<{ item: ListingItem }> = ({ item }) => {
+const ListingCard: React.FC<{ item: Asset }> = ({ item }) => {
     const [isFavorite, setIsFavorite] = useState(false)
 
     useEffect(() => {
@@ -154,7 +98,7 @@ const ListingCard: React.FC<{ item: ListingItem }> = ({ item }) => {
         const favorites = JSON.parse(localStorage.getItem('favorites') || '[]')
         if (isFavorite) {
             const newFavorites = favorites.filter(
-                (id: number) => id !== item.id
+                (id: string) => id !== item.id
             )
             localStorage.setItem('favorites', JSON.stringify(newFavorites))
         } else {
@@ -165,7 +109,7 @@ const ListingCard: React.FC<{ item: ListingItem }> = ({ item }) => {
     }
 
     return (
-        <Link to={`/listing/${item.type}/${item.id}`} className="block">
+        <Link to={`/asset/${item.id}`} className="block">
             <motion.div
                 className="bg-white rounded-lg shadow-md overflow-hidden h-full"
                 whileHover={{ scale: 1.03 }}
@@ -173,7 +117,7 @@ const ListingCard: React.FC<{ item: ListingItem }> = ({ item }) => {
             >
                 <div className="relative">
                     <img
-                        src={item.image}
+                        src={item.images[0]}
                         alt={item.title}
                         className="w-full h-48 object-cover"
                     />
@@ -195,7 +139,7 @@ const ListingCard: React.FC<{ item: ListingItem }> = ({ item }) => {
                 </div>
                 <div className="p-4">
                     <h2 className="text-xl font-semibold mb-2">{item.title}</h2>
-                    <p className="text-gray-600 mb-2">{item.location}</p>
+                    <p className="text-gray-600 mb-2">{item.location.city}</p>
                     <p className="text-lg font-bold text-red-600 mb-2">
                         R$ {item.price.toLocaleString()}
                     </p>
@@ -208,7 +152,7 @@ const ListingCard: React.FC<{ item: ListingItem }> = ({ item }) => {
                                         aria-hidden="true"
                                     />
                                     <span className="sr-only">Quartos:</span>
-                                    {item.details.bedrooms} quartos
+                                    {item.features.bedrooms} quartos
                                 </span>
                                 <span>
                                     <FaBath
@@ -216,9 +160,9 @@ const ListingCard: React.FC<{ item: ListingItem }> = ({ item }) => {
                                         aria-hidden="true"
                                     />
                                     <span className="sr-only">Banheiros:</span>
-                                    {item.details.bathrooms} banheiros
+                                    {item.features.bathrooms} banheiros
                                 </span>
-                                <span>{item.details.area} m²</span>
+                                <span>{item.features.area} m²</span>
                             </>
                         )}
                         {item.type === 'veiculo' && (
@@ -229,10 +173,10 @@ const ListingCard: React.FC<{ item: ListingItem }> = ({ item }) => {
                                         aria-hidden="true"
                                     />
                                     <span className="sr-only">Ano:</span>
-                                    {item.details.year}
+                                    {item.features.year}
                                 </span>
                                 <span>
-                                    {item.details.mileage?.toLocaleString()} km
+                                    {item.features.mileage?.toLocaleString()} km
                                 </span>
                             </>
                         )}
@@ -243,31 +187,70 @@ const ListingCard: React.FC<{ item: ListingItem }> = ({ item }) => {
     )
 }
 
-// Main Component
 const ListingPage: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams()
     const [searchTerm, setSearchTerm] = useState('')
-
-    const [displayedListings, setDisplayedListings] = useState<ListingItem[]>(
-        []
-    )
+    const [filterType, setFilterType] = useState<
+        'all' | 'imoveis' | 'veiculos' | 'favoritos'
+    >('all')
+    const [displayedListings, setDisplayedListings] = useState<Asset[]>([])
     const [hasMore, setHasMore] = useState(true)
+    const { allAssets, getAssetsByType } = useAssets()
 
-    const [filterType, setFilterType] = useState<FilterTypeOption>(
-        (searchParams.get('type') as FilterTypeOption) || 'all'
-    )
-    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
-    const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({
-        minPrice: 0,
-        maxPrice: 1000000,
-        bedrooms: 0,
-        bathrooms: 0,
-        minYear: 0,
-        maxMileage: 1000000,
-    })
+    useEffect(() => {
+        const type = searchParams.get('type') as
+            | 'all'
+            | 'imoveis'
+            | 'veiculos'
+            | 'favoritos'
+        setFilterType(type || 'all')
+        resetListings()
+    }, [searchParams, allAssets])
 
-    //Filter
-    type FilterTypeOption = 'all' | 'imoveis' | 'veiculos' | 'favoritos'
+    const resetListings = () => {
+        let filteredAssets = allAssets
+        if (filterType === 'imoveis') {
+            filteredAssets = getAssetsByType('imovel')
+        } else if (filterType === 'veiculos') {
+            filteredAssets = getAssetsByType('veiculo')
+        } else if (filterType === 'favoritos') {
+            const favorites = JSON.parse(
+                localStorage.getItem('favorites') || '[]'
+            )
+            filteredAssets = allAssets.filter(asset =>
+                favorites.includes(asset.id)
+            )
+        }
+
+        filteredAssets = filteredAssets.filter(
+            asset =>
+                asset.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                asset.location.city
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase())
+        )
+
+        setDisplayedListings(filteredAssets.slice(0, 6))
+        setHasMore(filteredAssets.length > 6)
+    }
+
+    const loadMore = () => {
+        const newListings = allAssets.slice(
+            displayedListings.length,
+            displayedListings.length + 6
+        )
+        setDisplayedListings([...displayedListings, ...newListings])
+        setHasMore(
+            displayedListings.length + newListings.length < allAssets.length
+        )
+    }
+
+    const handleFilterChange = (
+        newType: 'all' | 'imoveis' | 'veiculos' | 'favoritos'
+    ) => {
+        setFilterType(newType)
+        setSearchParams({ type: newType })
+    }
 
     const filterOptions = [
         {
@@ -292,125 +275,6 @@ const ListingPage: React.FC = () => {
         },
     ]
 
-    const handleFilterChange = (newType: FilterTypeOption) => {
-        setFilterType(newType)
-        setSearchParams({ type: newType })
-    }
-
-    const applyAdvancedFilters = (item: ListingItem) => {
-        if (
-            item.price < advancedFilters.minPrice ||
-            item.price > advancedFilters.maxPrice
-        ) {
-            return false
-        }
-        if (item.type === 'imovel') {
-            if (
-                advancedFilters.bedrooms > 0 &&
-                item.details?.bedrooms !== undefined &&
-                item.details.bedrooms < advancedFilters.bedrooms
-            ) {
-                return false
-            }
-            if (
-                advancedFilters.bathrooms > 0 &&
-                item.details?.bathrooms !== undefined &&
-                item.details.bathrooms < advancedFilters.bathrooms
-            ) {
-                return false
-            }
-        }
-        if (item.type === 'veiculo') {
-            if (
-                advancedFilters.minYear > 0 &&
-                item.details?.year !== undefined &&
-                item.details.year < advancedFilters.minYear
-            ) {
-                return false
-            }
-            if (
-                advancedFilters.maxMileage > 0 &&
-                item.details?.mileage !== undefined &&
-                item.details.mileage > advancedFilters.maxMileage
-            ) {
-                return false
-            }
-        }
-        return true
-    }
-
-    // Listing Functions
-    const resetListings = () => {
-        const favorites = JSON.parse(localStorage.getItem('favorites') || '[]')
-        const filtered = dummyListings.filter(item => {
-            const itemType =
-                filterType === 'imoveis'
-                    ? 'imovel'
-                    : filterType === 'veiculos'
-                      ? 'veiculo'
-                      : 'all'
-            const matchesType = itemType === 'all' || item.type === itemType
-            const matchesSearch =
-                item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.location.toLowerCase().includes(searchTerm.toLowerCase())
-            const isFavorite =
-                filterType === 'favoritos' ? favorites.includes(item.id) : true
-
-            return (
-                matchesType &&
-                matchesSearch &&
-                isFavorite &&
-                applyAdvancedFilters(item)
-            )
-        })
-        setDisplayedListings(filtered.slice(0, 6))
-        setHasMore(filtered.length > 6)
-    }
-
-    const loadMore = () => {
-        const filtered = dummyListings.filter(
-            item =>
-                (filterType === 'all' ||
-                    item.type === filterType.slice(0, -1)) &&
-                (item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    item.location
-                        .toLowerCase()
-                        .includes(searchTerm.toLowerCase()))
-        )
-        const newListings = filtered.slice(
-            displayedListings.length,
-            displayedListings.length + 6
-        )
-        setDisplayedListings([...displayedListings, ...newListings])
-        setHasMore(
-            displayedListings.length + newListings.length < filtered.length
-        )
-    }
-
-    // Constants
-    const pageTitle =
-        filterType === 'imoveis'
-            ? 'Imóveis'
-            : filterType === 'veiculos'
-              ? 'Veículos'
-              : 'Todos os Itens'
-
-    useEffect(() => {
-        const type = searchParams.get('type') as FilterTypeOption
-        const intention = searchParams.get('intention')
-        const term = searchParams.get('term')
-
-        setFilterType(type || 'all')
-        setSearchTerm(term || '')
-        // Você pode adicionar lógica adicional para lidar com a intenção, se necessário
-
-        resetListings()
-    }, [searchParams])
-
-    useEffect(() => {
-        resetListings()
-    }, [searchTerm, filterType])
-
     return (
         <>
             <Header isHomePage={false} />
@@ -419,7 +283,7 @@ const ListingPage: React.FC = () => {
                     <div className="relative mb-4 md:mb-0 md:w-1/2">
                         <input
                             type="text"
-                            placeholder={`Buscar ${pageTitle.toLowerCase()}`}
+                            placeholder={`Buscar ${filterType === 'imoveis' ? 'imóveis' : filterType === 'veiculos' ? 'veículos' : 'itens'}`}
                             className="w-full p-3 pl-10 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
@@ -433,198 +297,17 @@ const ListingPage: React.FC = () => {
                             options={filterOptions}
                             value={filterType}
                             onChange={value =>
-                                handleFilterChange(value as FilterTypeOption)
+                                handleFilterChange(
+                                    value as
+                                        | 'all'
+                                        | 'imoveis'
+                                        | 'veiculos'
+                                        | 'favoritos'
+                                )
                             }
                         />
                     </div>
                 </div>
-                <motion.button
-                    onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                    className="mb-4 text-red-600 hover:text-red-800 font-semibold flex items-center"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                >
-                    <FaFilter className="mr-2" />
-                    <AnimatePresence mode="wait" initial={false}>
-                        <motion.span
-                            key={showAdvancedFilters ? 'hide' : 'show'}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.05 }}
-                        >
-                            {showAdvancedFilters
-                                ? 'Ocultar filtros avançados'
-                                : 'Mostrar filtros avançados'}
-                        </motion.span>
-                    </AnimatePresence>
-                </motion.button>
-
-                <AnimatePresence>
-                    {showAdvancedFilters && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.1 }}
-                            className="mb-8 p-6 bg-gray-50 rounded-lg shadow-md border border-red-200"
-                        >
-                            <h3 className="text-xl font-semibold mb-4 text-red-600">
-                                Filtros Avançados
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                <div>
-                                    <label className="block text-gray-700 mb-2 font-medium">
-                                        Faixa de Preço
-                                    </label>
-                                    <div className="flex items-center space-x-2">
-                                        <FaDollarSign className="text-red-500" />
-                                        <input
-                                            type="number"
-                                            placeholder="Mín"
-                                            value={advancedFilters.minPrice}
-                                            onChange={e =>
-                                                setAdvancedFilters({
-                                                    ...advancedFilters,
-                                                    minPrice: Number(
-                                                        e.target.value
-                                                    ),
-                                                })
-                                            }
-                                            className="w-full p-2 border rounded focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                                        />
-                                        <span>-</span>
-                                        <input
-                                            type="number"
-                                            placeholder="Máx"
-                                            value={advancedFilters.maxPrice}
-                                            onChange={e =>
-                                                setAdvancedFilters({
-                                                    ...advancedFilters,
-                                                    maxPrice: Number(
-                                                        e.target.value
-                                                    ),
-                                                })
-                                            }
-                                            className="w-full p-2 border rounded focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                                        />
-                                    </div>
-                                </div>
-                                {filterType === 'imoveis' && (
-                                    <>
-                                        <div>
-                                            <label className="block text-gray-700 mb-2 font-medium">
-                                                Quartos
-                                            </label>
-                                            <div className="flex items-center">
-                                                <FaBed className="text-red-500 mr-2" />
-                                                <input
-                                                    type="number"
-                                                    placeholder="Mínimo"
-                                                    value={
-                                                        advancedFilters.bedrooms
-                                                    }
-                                                    onChange={e =>
-                                                        setAdvancedFilters({
-                                                            ...advancedFilters,
-                                                            bedrooms: Number(
-                                                                e.target.value
-                                                            ),
-                                                        })
-                                                    }
-                                                    className="w-full p-2 border rounded focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-gray-700 mb-2 font-medium">
-                                                Banheiros
-                                            </label>
-                                            <div className="flex items-center">
-                                                <FaBath className="text-red-500 mr-2" />
-                                                <input
-                                                    type="number"
-                                                    placeholder="Mínimo"
-                                                    value={
-                                                        advancedFilters.bathrooms
-                                                    }
-                                                    onChange={e =>
-                                                        setAdvancedFilters({
-                                                            ...advancedFilters,
-                                                            bathrooms: Number(
-                                                                e.target.value
-                                                            ),
-                                                        })
-                                                    }
-                                                    className="w-full p-2 border rounded focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                                                />
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                                {filterType === 'veiculos' && (
-                                    <>
-                                        <div>
-                                            <label className="block text-gray-700 mb-2 font-medium">
-                                                Ano
-                                            </label>
-                                            <div className="flex items-center">
-                                                <FaCalendarAlt className="text-red-500 mr-2" />
-                                                <input
-                                                    type="number"
-                                                    placeholder="Ano mínimo"
-                                                    value={
-                                                        advancedFilters.minYear
-                                                    }
-                                                    onChange={e =>
-                                                        setAdvancedFilters({
-                                                            ...advancedFilters,
-                                                            minYear: Number(
-                                                                e.target.value
-                                                            ),
-                                                        })
-                                                    }
-                                                    className="w-full p-2 border rounded focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-gray-700 mb-2 font-medium">
-                                                Quilometragem
-                                            </label>
-                                            <div className="flex items-center">
-                                                <FaTachometerAlt className="text-red-500 mr-2" />
-                                                <input
-                                                    type="number"
-                                                    placeholder="Máxima"
-                                                    value={
-                                                        advancedFilters.maxMileage
-                                                    }
-                                                    onChange={e =>
-                                                        setAdvancedFilters({
-                                                            ...advancedFilters,
-                                                            maxMileage: Number(
-                                                                e.target.value
-                                                            ),
-                                                        })
-                                                    }
-                                                    className="w-full p-2 border rounded focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                                                />
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                            <button
-                                onClick={resetListings}
-                                className="mt-6 bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition duration-300 flex items-center justify-center"
-                            >
-                                <FaFilter className="mr-2" />
-                                Aplicar Filtros
-                            </button>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
 
                 <InfiniteScroll
                     dataLength={displayedListings.length}

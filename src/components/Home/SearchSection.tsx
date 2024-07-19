@@ -1,18 +1,47 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FaSearch } from 'react-icons/fa'
 import IntentionDropdown from './IntentionDropDown'
-import AssetTypeDropdown from './AssetTypeDropDown.tsx'
+import AssetTypeDropdown from './AssetTypeDropDown'
+import { useAssets } from '../../hooks/useAssets'
 
 const SearchSection: React.FC = () => {
     const [selectedTypes, setSelectedTypes] = useState<string[]>([])
     const [selectedIntention, setSelectedIntention] = useState<string>('')
     const [searchTerm, setSearchTerm] = useState('')
+    const [suggestions, setSuggestions] = useState<
+        Array<{ id: string; title: string; image: string }>
+    >([])
     const navigate = useNavigate()
+    const { allAssets } = useAssets()
+
+    useEffect(() => {
+        if (searchTerm.length > 2) {
+            const filteredSuggestions = allAssets
+                .filter(
+                    asset =>
+                        asset.title
+                            .toLowerCase()
+                            .includes(searchTerm.toLowerCase()) ||
+                        asset.location.city
+                            .toLowerCase()
+                            .includes(searchTerm.toLowerCase())
+                )
+                .map(asset => ({
+                    id: asset.id,
+                    title: asset.title,
+                    image: asset.images[0],
+                }))
+                .slice(0, 5)
+            setSuggestions(filteredSuggestions)
+        } else {
+            setSuggestions([])
+        }
+    }, [searchTerm, allAssets])
 
     const handleSearch = () => {
         const queryParams = new URLSearchParams({
-            type: selectedTypes.length > 0 ? selectedTypes[0] : 'all',
+            types: selectedTypes.join(','),
             intention: selectedIntention,
             term: searchTerm,
         })
@@ -48,6 +77,29 @@ const SearchSection: React.FC = () => {
                                     placeholder="Cidade, região, bairro..."
                                     className="w-full p-3 pl-10 border rounded-lg"
                                 />
+                                {suggestions.length > 0 && (
+                                    <ul className="absolute z-10 w-full bg-white border rounded-lg mt-1 shadow-lg">
+                                        {suggestions.map(suggestion => (
+                                            <li
+                                                key={suggestion.id}
+                                                className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                                                onClick={() => {
+                                                    setSearchTerm(
+                                                        suggestion.title
+                                                    )
+                                                    setSuggestions([])
+                                                }}
+                                            >
+                                                <img
+                                                    src={suggestion.image}
+                                                    alt={suggestion.title}
+                                                    className="w-12 h-12 object-cover rounded-md mr-3"
+                                                />
+                                                <span>{suggestion.title}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                             </div>
                         </div>
                         <div className="w-full md:w-1/6 px-2 mb-4">

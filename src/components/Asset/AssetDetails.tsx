@@ -1,47 +1,37 @@
 import React, { useState } from 'react'
 import { FaMapMarkerAlt, FaBed, FaBath, FaCar, FaRuler } from 'react-icons/fa'
+import { Link } from 'react-router-dom'
+import { useAssets } from '../../hooks/useAssets'
 import AssetCard from './AssetCard'
 
 interface AssetDetailsProps {
-    title?: string
-    description?: string
-    city?: string
-    neighborhood?: string
-    state?: string
-    zipCode?: string
-    area?: number
-    bedrooms?: number
-    bathrooms?: number
-    parkingSpaces?: number
-    similarAssets: any[] // Tipo a ser definido conforme a estrutura dos ativos
+    assetId: string
 }
 
-const AssetDetails: React.FC<AssetDetailsProps> = ({
-    title,
-    description,
-    city,
-    neighborhood,
-    state,
-    zipCode,
-    area,
-    bedrooms,
-    bathrooms,
-    parkingSpaces,
-    similarAssets,
-}) => {
+const AssetDetails: React.FC<AssetDetailsProps> = ({ assetId }) => {
+    const { getAssetById, getSimilarAssets } = useAssets()
+    const asset = getAssetById(assetId)
+    const similarAssets = asset ? getSimilarAssets(asset) : []
+
     const [showFullDescription, setShowFullDescription] = useState(false)
     const descriptionLimit = 200
 
+    if (!asset) {
+        return <div>Asset not found</div>
+    }
+
     return (
         <div className="mt-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-4">{title}</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-4">
+                {asset.title}
+            </h1>
 
             <p className="text-gray-600 mb-2">
                 {showFullDescription
-                    ? description
-                    : `${description.slice(0, descriptionLimit)}...`}
+                    ? asset.description
+                    : `${asset.description.slice(0, descriptionLimit)}...`}
             </p>
-            {description.length > descriptionLimit && (
+            {asset.description.length > descriptionLimit && (
                 <button
                     onClick={() => setShowFullDescription(!showFullDescription)}
                     className="text-red-600 hover:text-red-800 font-semibold"
@@ -58,13 +48,13 @@ const AssetDetails: React.FC<AssetDetailsProps> = ({
                 Localização
             </h2>
             <div className="flex items-start">
-                <FaMapMarkerAlt className="text-red-500 mr-4 mt-1" />
+                <FaMapMarkerAlt className="text-red-500 text-2xl mr-4 mt-1" />
                 <div>
                     <p className="font-semibold">
-                        {city}, {neighborhood}
+                        {asset.location.city}, {asset.location.neighborhood}
                     </p>
                     <p className="text-gray-600">
-                        {state} - CEP: {zipCode}
+                        {asset.location.state} - CEP: {asset.location.zipCode}
                     </p>
                 </div>
             </div>
@@ -75,22 +65,38 @@ const AssetDetails: React.FC<AssetDetailsProps> = ({
                 Detalhes
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="flex items-center">
-                    <FaRuler className="text-red-500 mr-2" />
-                    <span>{area} m²</span>
-                </div>
-                <div className="flex items-center">
-                    <FaBed className="text-red-500 mr-2" />
-                    <span>{bedrooms} quartos</span>
-                </div>
-                <div className="flex items-center">
-                    <FaBath className="text-red-500 mr-2" />
-                    <span>{bathrooms} banheiros</span>
-                </div>
-                <div className="flex items-center">
-                    <FaCar className="text-red-500 mr-2" />
-                    <span>{parkingSpaces} vagas</span>
-                </div>
+                {asset.type === 'imovel' && (
+                    <>
+                        <div className="flex items-center">
+                            <FaRuler className="text-red-500 text-2xl mr-2" />
+                            <span>{asset.features.area} m²</span>
+                        </div>
+                        <div className="flex items-center">
+                            <FaBed className="text-red-500 text-2xl mr-2" />
+                            <span>{asset.features.bedrooms} quartos</span>
+                        </div>
+                        <div className="flex items-center">
+                            <FaBath className="text-red-500 text-2xl mr-2" />
+                            <span>{asset.features.bathrooms} banheiros</span>
+                        </div>
+                        <div className="flex items-center">
+                            <FaCar className="text-red-500 text-2xl mr-2" />
+                            <span>{asset.features.parkingSpaces} vagas</span>
+                        </div>
+                    </>
+                )}
+                {asset.type === 'veiculo' && (
+                    <>
+                        <div className="flex items-center">
+                            <FaCar className="text-red-500 mr-2" />
+                            <span>Ano: {asset.features.year}</span>
+                        </div>
+                        <div className="flex items-center">
+                            <FaRuler className="text-red-500 mr-2" />
+                            <span>{asset.features.mileage} km</span>
+                        </div>
+                    </>
+                )}
             </div>
 
             <hr className="my-6" />
@@ -104,17 +110,20 @@ const AssetDetails: React.FC<AssetDetailsProps> = ({
                     financiamento e descubra as melhores condições para adquirir
                     este imóvel.
                 </p>
-                <button className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition duration-300">
+                <Link
+                    to="/financiamento"
+                    className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition duration-300"
+                >
                     Simular Financiamento
-                </button>
+                </Link>
             </div>
 
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-                Imóveis Similares
+                Itens Similares
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {similarAssets.map((asset, index) => (
-                    <AssetCard key={index} asset={asset} />
+                {similarAssets.map(similarAsset => (
+                    <AssetCard key={similarAsset.id} asset={similarAsset} />
                 ))}
             </div>
         </div>
