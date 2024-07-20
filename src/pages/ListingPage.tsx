@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import {
     FaSearch,
@@ -21,6 +21,7 @@ import InfiniteScroll from 'react-infinite-scroll-component'
 import { useAssets } from '../hooks/useAssets'
 import { Asset } from '../data/assets'
 
+// Components
 const CustomSelect: React.FC<{
     options: { value: string; label: string; icon: React.ReactNode }[]
     value: string
@@ -85,8 +86,10 @@ const CustomSelect: React.FC<{
     )
 }
 
-const ListingCard: React.FC<{ item: Asset }> = ({ item }) => {
+export const ListingCard: React.FC<{ item: Asset }> = ({ item }) => {
     const [isFavorite, setIsFavorite] = useState(false)
+
+    const assetTitle = item.title.toLowerCase().replace(/\s+/g, '-')
 
     useEffect(() => {
         const favorites = JSON.parse(localStorage.getItem('favorites') || '[]')
@@ -109,7 +112,7 @@ const ListingCard: React.FC<{ item: Asset }> = ({ item }) => {
     }
 
     return (
-        <Link to={`/asset/${item.id}`} className="block">
+        <Link to={`/asset/${assetTitle}`} className="block">
             <motion.div
                 className="bg-white rounded-lg shadow-md overflow-hidden h-full"
                 whileHover={{ scale: 1.03 }}
@@ -187,6 +190,7 @@ const ListingCard: React.FC<{ item: Asset }> = ({ item }) => {
     )
 }
 
+// Main Component
 const ListingPage: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams()
     const [searchTerm, setSearchTerm] = useState('')
@@ -195,19 +199,18 @@ const ListingPage: React.FC = () => {
     >('all')
     const [displayedListings, setDisplayedListings] = useState<Asset[]>([])
     const [hasMore, setHasMore] = useState(true)
+    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
+    const [advancedFilters, setAdvancedFilters] = useState({
+        minPrice: 0,
+        maxPrice: 1000000,
+        bedrooms: 0,
+        bathrooms: 0,
+        minYear: 0,
+        maxMileage: 1000000,
+    })
     const { allAssets, getAssetsByType } = useAssets()
 
-    useEffect(() => {
-        const type = searchParams.get('type') as
-            | 'all'
-            | 'imoveis'
-            | 'veiculos'
-            | 'favoritos'
-        setFilterType(type || 'all')
-        resetListings()
-    }, [searchParams, allAssets])
-
-    const resetListings = () => {
+    const resetListings = useCallback(() => {
         let filteredAssets = allAssets
         if (filterType === 'imoveis') {
             filteredAssets = getAssetsByType('imovel')
@@ -230,9 +233,61 @@ const ListingPage: React.FC = () => {
                     .includes(searchTerm.toLowerCase())
         )
 
+        filteredAssets = filteredAssets.filter(asset => {
+            if (
+                asset.price < advancedFilters.minPrice ||
+                asset.price > advancedFilters.maxPrice
+            ) {
+                return false
+            }
+            if (asset.type === 'imovel') {
+                if (
+                    advancedFilters.bedrooms > 0 &&
+                    asset.features.bedrooms &&
+                    asset.features.bedrooms < advancedFilters.bedrooms
+                ) {
+                    return false
+                }
+                if (
+                    advancedFilters.bathrooms > 0 &&
+                    asset.features.bathrooms &&
+                    asset.features.bathrooms < advancedFilters.bathrooms
+                ) {
+                    return false
+                }
+            }
+            if (asset.type === 'veiculo') {
+                if (
+                    advancedFilters.minYear > 0 &&
+                    asset.features.year &&
+                    asset.features.year < advancedFilters.minYear
+                ) {
+                    return false
+                }
+                if (
+                    advancedFilters.maxMileage > 0 &&
+                    asset.features.mileage &&
+                    asset.features.mileage > advancedFilters.maxMileage
+                ) {
+                    return false
+                }
+            }
+
+            return true
+        })
+
         setDisplayedListings(filteredAssets.slice(0, 6))
         setHasMore(filteredAssets.length > 6)
-    }
+    }, [allAssets, filterType, getAssetsByType, searchTerm, advancedFilters])
+    useEffect(() => {
+        const type = searchParams.get('type') as
+            | 'all'
+            | 'imoveis'
+            | 'veiculos'
+            | 'favoritos'
+        setFilterType(type || 'all')
+        resetListings()
+    }, [searchParams, allAssets, resetListings])
 
     const loadMore = () => {
         const newListings = allAssets.slice(
@@ -283,7 +338,7 @@ const ListingPage: React.FC = () => {
                     <div className="relative mb-4 md:mb-0 md:w-1/2">
                         <input
                             type="text"
-                            placeholder={`Buscar ${filterType === 'imoveis' ? 'imóveis' : filterType === 'veiculos' ? 'veículos' : 'itens'}`}
+                            placeholder={`Buscar ${filterType === 'imoveis' ? 'imóveis' : filterType === 'veiculos' ? 'veículos' : 'todos os itens'}`}
                             className="w-full p-3 pl-10 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
@@ -308,6 +363,193 @@ const ListingPage: React.FC = () => {
                         />
                     </div>
                 </div>
+                <motion.button
+                    onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                    className="mb-4 text-red-600 hover:text-red-800 font-semibold flex items-center"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                >
+                    <FaFilter className="mr-2" />
+                    <AnimatePresence mode="wait" initial={false}>
+                        <motion.span
+                            key={showAdvancedFilters ? 'hide' : 'show'}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.05 }}
+                        >
+                            {showAdvancedFilters
+                                ? 'Ocultar filtros avançados'
+                                : 'Mostrar filtros avançados'}
+                        </motion.span>
+                    </AnimatePresence>
+                </motion.button>
+
+                <AnimatePresence>
+                    {showAdvancedFilters && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.1 }}
+                            className="mb-8 p-6 bg-gray-50 rounded-lg shadow-md border border-red-200"
+                        >
+                            <h3 className="text-xl font-semibold mb-4 text-red-600">
+                                Filtros Avançados
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div>
+                                    <label className="block text-gray-700 mb-2 font-medium">
+                                        Faixa de Preço
+                                    </label>
+                                    <div className="flex items-center space-x-2">
+                                        <FaDollarSign className="text-red-500" />
+                                        <input
+                                            type="number"
+                                            placeholder="Mín"
+                                            value={advancedFilters.minPrice}
+                                            onChange={e =>
+                                                setAdvancedFilters({
+                                                    ...advancedFilters,
+                                                    minPrice: Number(
+                                                        e.target.value
+                                                    ),
+                                                })
+                                            }
+                                            className="w-full p-2 border rounded focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                                        />
+                                        <span>-</span>
+                                        <input
+                                            type="number"
+                                            placeholder="Máx"
+                                            value={advancedFilters.maxPrice}
+                                            onChange={e =>
+                                                setAdvancedFilters({
+                                                    ...advancedFilters,
+                                                    maxPrice: Number(
+                                                        e.target.value
+                                                    ),
+                                                })
+                                            }
+                                            className="w-full p-2 border rounded focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                                        />
+                                    </div>
+                                </div>
+                                {filterType === 'imoveis' && (
+                                    <>
+                                        <div>
+                                            <label className="block text-gray-700 mb-2 font-medium">
+                                                Quartos
+                                            </label>
+                                            <div className="flex items-center">
+                                                <FaBed className="text-red-500 mr-2" />
+                                                <input
+                                                    type="number"
+                                                    placeholder="Mínimo"
+                                                    value={
+                                                        advancedFilters.bedrooms
+                                                    }
+                                                    onChange={e =>
+                                                        setAdvancedFilters({
+                                                            ...advancedFilters,
+                                                            bedrooms: Number(
+                                                                e.target.value
+                                                            ),
+                                                        })
+                                                    }
+                                                    className="w-full p-2 border rounded focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-gray-700 mb-2 font-medium">
+                                                Banheiros
+                                            </label>
+                                            <div className="flex items-center">
+                                                <FaBath className="text-red-500 mr-2" />
+                                                <input
+                                                    type="number"
+                                                    placeholder="Mínimo"
+                                                    value={
+                                                        advancedFilters.bathrooms
+                                                    }
+                                                    onChange={e =>
+                                                        setAdvancedFilters({
+                                                            ...advancedFilters,
+                                                            bathrooms: Number(
+                                                                e.target.value
+                                                            ),
+                                                        })
+                                                    }
+                                                    className="w-full p-2 border rounded focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                                                />
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                                {filterType === 'veiculos' && (
+                                    <>
+                                        <div>
+                                            <label className="block text-gray-700 mb-2 font-medium">
+                                                Ano
+                                            </label>
+                                            <div className="flex items-center">
+                                                <FaCalendarAlt className="text-red-500 mr-2" />
+                                                <input
+                                                    type="number"
+                                                    placeholder="Ano mínimo"
+                                                    value={
+                                                        advancedFilters.minYear
+                                                    }
+                                                    onChange={e =>
+                                                        setAdvancedFilters({
+                                                            ...advancedFilters,
+                                                            minYear: Number(
+                                                                e.target.value
+                                                            ),
+                                                        })
+                                                    }
+                                                    className="w-full p-2 border rounded focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-gray-700 mb-2 font-medium">
+                                                Quilometragem
+                                            </label>
+                                            <div className="flex items-center">
+                                                <FaTachometerAlt className="text-red-500 mr-2" />
+                                                <input
+                                                    type="number"
+                                                    placeholder="Máxima"
+                                                    value={
+                                                        advancedFilters.maxMileage
+                                                    }
+                                                    onChange={e =>
+                                                        setAdvancedFilters({
+                                                            ...advancedFilters,
+                                                            maxMileage: Number(
+                                                                e.target.value
+                                                            ),
+                                                        })
+                                                    }
+                                                    className="w-full p-2 border rounded focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                                                />
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                            <button
+                                onClick={resetListings}
+                                className="mt-6 bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition duration-300 flex items-center justify-center"
+                            >
+                                <FaFilter className="mr-2" />
+                                Aplicar Filtros
+                            </button>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 <InfiniteScroll
                     dataLength={displayedListings.length}

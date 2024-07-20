@@ -12,8 +12,23 @@ export const useAssets = () => {
         return allAssets.find(asset => asset.id === id)
     }
 
+    const getAssetByTitle = (title: string) => {
+        return allAssets.find(
+            asset => asset.title.toLowerCase().replace(/\s+/g, '-') === title
+        )
+    }
+
     const getAssetsByType = (type: 'imovel' | 'veiculo') => {
         return allAssets.filter(asset => asset.type === type)
+    }
+
+    const getAssetByTitleAndType = (title: string, type: string) => {
+        const formattedTitle = title.toLowerCase().replace(/-/g, ' ')
+        return assets.find(
+            asset =>
+                asset.title.toLowerCase() === formattedTitle &&
+                (type === '' || asset.type === type)
+        )
     }
 
     const getSimilarAssets = (asset: Asset, limit: number = 3) => {
@@ -30,7 +45,9 @@ export const useAssets = () => {
     return {
         allAssets,
         getAssetById,
+        getAssetByTitle,
         getAssetsByType,
+        getAssetByTitleAndType,
         getSimilarAssets,
     }
 }

@@ -74,9 +74,15 @@ const SearchSection: React.FC = () => {
                                     onChange={e =>
                                         setSearchTerm(e.target.value)
                                     }
+                                    onKeyPress={e => {
+                                        if (e.key === 'Enter') {
+                                            handleSearch()
+                                        }
+                                    }}
                                     placeholder="Cidade, região, bairro..."
                                     className="w-full p-3 pl-10 border rounded-lg"
                                 />
+
                                 {suggestions.length > 0 && (
                                     <ul className="absolute z-10 w-full bg-white border rounded-lg mt-1 shadow-lg">
                                         {suggestions.map(suggestion => (

@@ -17,7 +17,11 @@ const AssetDetails: React.FC<AssetDetailsProps> = ({ assetId }) => {
     const descriptionLimit = 200
 
     if (!asset) {
-        return <div>Asset not found</div>
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <p className="text-xl text-gray-600">Asset not found</p>
+            </div>
+        )
     }
 
     return (
@@ -123,7 +127,20 @@ const AssetDetails: React.FC<AssetDetailsProps> = ({ assetId }) => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {similarAssets.map(similarAsset => (
-                    <AssetCard key={similarAsset.id} asset={similarAsset} />
+                    <AssetCard
+                        key={similarAsset.id}
+                        asset={{
+                            id: similarAsset.id,
+                            title: similarAsset.title,
+                            price: similarAsset.price,
+                            area: similarAsset.features?.area || 0,
+                            bedrooms: similarAsset.features?.bedrooms || 0,
+                            bathrooms: similarAsset.features?.bathrooms || 0,
+                            parkingSpaces:
+                                similarAsset.features?.parkingSpaces || 0,
+                            imageUrl: similarAsset.imageUrl || '',
+                        }}
+                    />
                 ))}
             </div>
         </div>

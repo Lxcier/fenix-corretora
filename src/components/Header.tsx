@@ -46,7 +46,7 @@ const Header: React.FC<HeaderProps> = ({ isHomePage }) => {
                     <ul className="flex space-x-6">
                         <li>
                             <Link
-                                to="/listing/imoveis"
+                                to="/listing?type=imoveis"
                                 className={`font-semibold hover:text-orange-500 hover:border-orange-500 border-b-[3px] border-transparent transition-colors duration-200 pb-1 ${
                                     isScrolled ? 'text-gray-800' : 'text-white'
                                 }`}
@@ -56,7 +56,7 @@ const Header: React.FC<HeaderProps> = ({ isHomePage }) => {
                         </li>
                         <li>
                             <Link
-                                to="/listing/veiculos"
+                                to="/listing?type=veiculos"
                                 className={`font-semibold hover:text-orange-500 hover:border-orange-500 border-b-[3px] border-transparent transition-colors duration-200 pb-1 ${
                                     isScrolled ? 'text-gray-800' : 'text-white'
                                 }`}

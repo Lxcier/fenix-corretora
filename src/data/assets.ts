@@ -1,4 +1,5 @@
 export interface Asset {
+    imageUrl: string
     id: string
     type: 'imovel' | 'veiculo'
     title: string
@@ -37,7 +38,7 @@ export const assets: Asset[] = [
             'Lindo apartamento com vista panorâmica, acabamento de alto padrão e localização privilegiada. Próximo a restaurantes, shopping e transporte público.',
         price: 500000,
         rentPrice: 2500,
-        images: ['url1', 'url2', 'url3'],
+        images: ['https://via.placeholder.com/800x600', 'url2', 'url3'],
         location: {
             city: 'São Paulo',
             neighborhood: 'Centro',
@@ -56,6 +57,7 @@ export const assets: Asset[] = [
         forRent: true,
         condoFee: 800,
         iptu: 200,
+        imageUrl: 'https://via.placeholder.com/800x600',
     },
     {
         id: '2',
@@ -64,7 +66,7 @@ export const assets: Asset[] = [
         description:
             'Veículo em excelente estado, baixa quilometragem, completo com teto solar, câmera de ré e sistema de som premium.',
         price: 150000,
-        images: ['url1', 'url2'],
+        images: ['https://via.placeholder.com/800x600', 'url2'],
         location: {
             city: 'Rio de Janeiro',
             neighborhood: 'Barra da Tijuca',
@@ -79,6 +81,7 @@ export const assets: Asset[] = [
         isNew: true,
         forSale: true,
         forRent: false,
+        imageUrl: 'https://via.placeholder.com/800x600',
     },
     {
         id: '3',
@@ -88,7 +91,7 @@ export const assets: Asset[] = [
             'Espaçosa casa de campo com piscina, área de churrasco e amplo jardim. Perfeita para quem busca tranquilidade e contato com a natureza.',
         price: 800000,
         rentPrice: 5000,
-        images: ['url1', 'url2', 'url3', 'url4'],
+        images: ['https://via.placeholder.com/800x600', 'url2', 'url3', 'url4'],
         location: {
             city: 'Atibaia',
             neighborhood: 'Condomínio Flamboyant',
@@ -107,5 +110,6 @@ export const assets: Asset[] = [
         forRent: true,
         condoFee: 500,
         iptu: 300,
+        imageUrl: 'https://via.placeholder.com/800x600',
     },
 ]

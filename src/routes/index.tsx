@@ -48,7 +48,7 @@ const router = createBrowserRouter([
         element: <ListingPage />,
     },
     {
-        path: '/asset/:id',
+        path: '/asset/:title',
         element: <AssetPage />,
     },
 ])

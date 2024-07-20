@@ -6,6 +6,12 @@
     @apply bg-white;
 }
 
+html,
+body,
+.app {
+    scroll-behavior: smooth;
+}
+
 .swiper-pagination-bullet-active {
     background-color: #fb923c !important;
 }

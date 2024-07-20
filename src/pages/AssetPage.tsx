@@ -9,13 +9,38 @@ import AssetSidebar from '../components/Asset/AssetSidebar'
 import { useAssets } from '../hooks/useAssets'
 
 const AssetPage: React.FC = () => {
-    const { id } = useParams<{ id: string }>()
-    const { getAssetById } = useAssets()
-    const asset = getAssetById(id || '')
+    const { title } = useParams<{ title: string }>()
+    const { getAssetByTitle } = useAssets()
+    const asset = getAssetByTitle(title || '')
     const [activeIndex, setActiveIndex] = useState(0)
 
     if (!asset) {
-        return <div>Asset not found</div>
+        return (
+            <div className="min-h-screen flex flex-col bg-gray-100">
+                <Header isHomePage={false} />
+                <main className="flex-grow container mx-auto px-4 py-8 pt-28 md:pt-40 flex items-center justify-center">
+                    <div className="bg-white p-8 rounded-lg shadow-lg text-center max-w-md w-full">
+                        <h1 className="text-4xl font-bold text-red-500 mb-4">
+                            404
+                        </h1>
+                        <h2 className="text-2xl font-semibold text-gray-700 mb-4">
+                            Ativo não encontrado
+                        </h2>
+                        <p className="text-gray-600 mb-8">
+                            Desculpe, não foi possível encontrar o ativo que
+                            você está procurando.
+                        </p>
+                        <a
+                            href="/"
+                            className="bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-full transition duration-300 ease-in-out transform hover:scale-105"
+                        >
+                            Voltar para a página inicial
+                        </a>
+                    </div>
+                </main>
+                <Footer />
+            </div>
+        )
     }
 
     const handleThumbnailClick = (index: number) => {
